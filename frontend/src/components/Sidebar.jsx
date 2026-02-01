@@ -6,6 +6,7 @@ import {
   LogOut,
 } from 'lucide-react';
 import { getOrderedNavItems } from '../config/navigation';
+import { usePluginStore } from '../store/plugins';
 import {
   Avatar,
   AppShell,
@@ -81,11 +82,14 @@ const Sidebar = ({ collapsed, toggleDrawer, drawerWidth, miniDrawerWidth }) => {
   const hiddenNav = authUser?.custom_properties?.hiddenNav || [];
   const isAdmin = authUser && authUser.user_level >= USER_LEVELS.ADMIN;
 
+  // Get plugins for navigation
+  const plugins = usePluginStore((s) => s.plugins);
+
   // Navigation Items - computed from user's saved order, filtered by visibility
   const navItems = useMemo(() => {
-    const orderedItems = getOrderedNavItems(navOrder, isAdmin, channels);
+    const orderedItems = getOrderedNavItems(navOrder, isAdmin, channels, plugins);
     return orderedItems.filter((item) => !hiddenNav.includes(item.id));
-  }, [navOrder, hiddenNav, isAdmin, channels]);
+  }, [navOrder, hiddenNav, isAdmin, channels, plugins]);
 
   // Environment settings and version are loaded by the settings store during initData()
   // No need to fetch them again here - just use the store values

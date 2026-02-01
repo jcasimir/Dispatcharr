@@ -9,7 +9,47 @@ import {
   PlugZap,
   User,
   FileImage,
+  Smile,
+  Calendar,
+  Home,
+  Star,
+  Heart,
+  Bell,
+  Mail,
+  Search,
+  Globe,
+  Zap,
 } from 'lucide-react';
+
+// Icon name mapping for plugin navigation
+const PLUGIN_ICON_MAP = {
+  smile: Smile,
+  calendar: Calendar,
+  home: Home,
+  star: Star,
+  heart: Heart,
+  bell: Bell,
+  mail: Mail,
+  search: Search,
+  globe: Globe,
+  zap: Zap,
+  plug: PlugZap,
+  video: Video,
+  chart: ChartLine,
+  database: Database,
+  settings: LucideSettings,
+  user: User,
+  play: Play,
+  list: ListOrdered,
+  grid: LayoutGrid,
+  image: FileImage,
+};
+
+export const getIconForName = (iconName) => {
+  if (!iconName) return PlugZap;
+  const normalized = iconName.toLowerCase().trim();
+  return PLUGIN_ICON_MAP[normalized] || PlugZap;
+};
 
 export const NAV_ITEMS = {
   channels: {
@@ -104,11 +144,32 @@ export const DEFAULT_USER_ORDER = [
   'settings',
 ];
 
-export const getOrderedNavItems = (userOrder, isAdmin, channels = {}) => {
+export const getOrderedNavItems = (userOrder, isAdmin, channels = {}, plugins = []) => {
   const defaultOrder = isAdmin ? DEFAULT_ADMIN_ORDER : DEFAULT_USER_ORDER;
+
+  // Build plugin nav items map for enabled plugins with navigation
+  const pluginNavItems = {};
+  const pluginIds = [];
+  plugins
+    .filter((p) => p.enabled && p.navigation?.label)
+    .forEach((p) => {
+      const id = `plugin_${p.key}`;
+      pluginIds.push(id);
+      pluginNavItems[id] = {
+        id,
+        label: p.navigation.label,
+        icon: getIconForName(p.navigation.icon),
+        path: `/plugin/${p.key}`,
+        adminOnly: false, // Plugin views are available to all users
+      };
+    });
+
+  // Combine built-in items with plugin items
+  const allItems = { ...NAV_ITEMS, ...pluginNavItems };
+
   const allowedItems = isAdmin
-    ? Object.keys(NAV_ITEMS)
-    : Object.keys(NAV_ITEMS).filter((id) => !NAV_ITEMS[id].adminOnly);
+    ? Object.keys(allItems)
+    : Object.keys(allItems).filter((id) => !allItems[id].adminOnly);
 
   let order;
   if (userOrder && Array.isArray(userOrder) && userOrder.length > 0) {
@@ -120,11 +181,12 @@ export const getOrderedNavItems = (userOrder, isAdmin, channels = {}) => {
 
     order = [...filteredOrder, ...missingItems];
   } else {
-    order = defaultOrder;
+    // Default order: built-in items followed by plugin items
+    order = [...defaultOrder, ...pluginIds];
   }
 
   return order.map((id) => {
-    const item = NAV_ITEMS[id];
+    const item = allItems[id];
     if (!item) return null;
 
     const navItem = {

@@ -3,11 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import userEvent from '@testing-library/user-event';
 import NavOrderForm from '../NavOrderForm';
 import useAuthStore from '../../../../store/auth';
+import { usePluginStore } from '../../../../store/plugins';
 import { USER_LEVELS } from '../../../../constants';
 import { DEFAULT_ADMIN_ORDER, DEFAULT_USER_ORDER } from '../../../../config/navigation';
 
 // Mock dependencies
 vi.mock('../../../../store/auth');
+vi.mock('../../../../store/plugins');
 vi.mock('@mantine/notifications', () => ({
   notifications: {
     show: vi.fn(),
@@ -85,6 +87,12 @@ describe('NavOrderForm', () => {
     mockGetHiddenNav.mockReturnValue([]);
     mockToggleNavVisibility.mockResolvedValue({});
     mockUpdateUserPreferences.mockResolvedValue({});
+
+    // Mock plugin store - return empty plugins by default
+    usePluginStore.mockImplementation((selector) => {
+      const state = { plugins: [] };
+      return selector(state);
+    });
   });
 
   describe('Admin User', () => {
@@ -231,6 +239,56 @@ describe('NavOrderForm', () => {
           hiddenNav: [],
         });
       });
+    });
+  });
+
+  describe('With Plugin Nav Items', () => {
+    const mockPlugins = [
+      {
+        key: 'test_plugin',
+        name: 'Test Plugin',
+        enabled: true,
+        navigation: { label: 'Test Plugin Nav', icon: 'star' },
+      },
+    ];
+
+    beforeEach(() => {
+      useAuthStore.mockImplementation((selector) => {
+        const state = {
+          user: { user_level: USER_LEVELS.ADMIN, custom_properties: {} },
+          getNavOrder: mockGetNavOrder,
+          setNavOrder: mockSetNavOrder,
+          getHiddenNav: mockGetHiddenNav,
+          toggleNavVisibility: mockToggleNavVisibility,
+          updateUserPreferences: mockUpdateUserPreferences,
+        };
+        return selector(state);
+      });
+
+      usePluginStore.mockImplementation((selector) => {
+        const state = { plugins: mockPlugins };
+        return selector(state);
+      });
+    });
+
+    it('renders plugin nav items alongside built-in items', () => {
+      render(<NavOrderForm active={true} />);
+
+      // Built-in items should be present
+      expect(screen.getByText('Channels')).toBeInTheDocument();
+      expect(screen.getByText('Settings')).toBeInTheDocument();
+
+      // Plugin nav item should also be present
+      expect(screen.getByText('Test Plugin Nav')).toBeInTheDocument();
+    });
+
+    it('allows hiding plugin nav items', () => {
+      render(<NavOrderForm active={true} />);
+
+      // Plugin item should have visibility toggle
+      expect(screen.getByText('Test Plugin Nav')).toBeInTheDocument();
+      const toggleButtons = screen.getAllByTitle(/from navigation/i);
+      expect(toggleButtons.length).toBeGreaterThan(0);
     });
   });
 });

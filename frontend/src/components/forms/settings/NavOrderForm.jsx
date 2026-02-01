@@ -28,6 +28,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import useAuthStore from '../../../store/auth';
+import { usePluginStore } from '../../../store/plugins';
 import {
   NAV_ITEMS,
   DEFAULT_ADMIN_ORDER,
@@ -106,6 +107,7 @@ const NavOrderForm = ({ active }) => {
   const setNavOrder = useAuthStore((s) => s.setNavOrder);
   const getHiddenNav = useAuthStore((s) => s.getHiddenNav);
   const toggleNavVisibility = useAuthStore((s) => s.toggleNavVisibility);
+  const plugins = usePluginStore((s) => s.plugins);
 
   const isAdmin = user?.user_level >= USER_LEVELS.ADMIN;
   const defaultOrder = isAdmin ? DEFAULT_ADMIN_ORDER : DEFAULT_USER_ORDER;
@@ -122,10 +124,10 @@ const NavOrderForm = ({ active }) => {
   useEffect(() => {
     if (active) {
       const savedOrder = getNavOrder();
-      const orderedItems = getOrderedNavItems(savedOrder, isAdmin);
+      const orderedItems = getOrderedNavItems(savedOrder, isAdmin, {}, plugins);
       setItems(orderedItems);
     }
-  }, [active, isAdmin, getNavOrder]);
+  }, [active, isAdmin, getNavOrder, plugins]);
 
   const handleDragEnd = async ({ active, over }) => {
     if (!over || active.id === over.id) return;
@@ -151,7 +153,7 @@ const NavOrderForm = ({ active }) => {
     } catch (error) {
       // Revert on failure
       const savedOrder = getNavOrder();
-      const orderedItems = getOrderedNavItems(savedOrder, isAdmin);
+      const orderedItems = getOrderedNavItems(savedOrder, isAdmin, {}, plugins);
       setItems(orderedItems);
       notifications.show({
         title: 'Error',
@@ -169,7 +171,7 @@ const NavOrderForm = ({ active }) => {
     setIsSaving(true);
     try {
       await updateUserPreferences({ navOrder: defaultOrder, hiddenNav: [] });
-      const orderedItems = getOrderedNavItems(defaultOrder, isAdmin);
+      const orderedItems = getOrderedNavItems(defaultOrder, isAdmin, {}, plugins);
       setItems(orderedItems);
       notifications.show({
         title: 'Navigation',

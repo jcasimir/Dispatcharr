@@ -4,6 +4,7 @@ import {
   DEFAULT_ADMIN_ORDER,
   DEFAULT_USER_ORDER,
   getOrderedNavItems,
+  getIconForName,
 } from '../navigation';
 
 describe('navigation config', () => {
@@ -168,6 +169,105 @@ describe('navigation config', () => {
 
       // Should only have non-admin items
       expect(resultIds).toHaveLength(3);
+    });
+
+    describe('with plugins', () => {
+      const mockPlugins = [
+        {
+          key: 'test_plugin',
+          name: 'Test Plugin',
+          enabled: true,
+          navigation: { label: 'Test Plugin', icon: 'star' },
+        },
+        {
+          key: 'disabled_plugin',
+          name: 'Disabled Plugin',
+          enabled: false,
+          navigation: { label: 'Disabled', icon: 'x' },
+        },
+        {
+          key: 'no_nav_plugin',
+          name: 'No Nav Plugin',
+          enabled: true,
+          navigation: {},
+        },
+      ];
+
+      it('includes enabled plugins with navigation in nav items', () => {
+        const result = getOrderedNavItems(null, true, {}, mockPlugins);
+        const resultIds = result.map((item) => item.id);
+
+        expect(resultIds).toContain('plugin_test_plugin');
+        expect(resultIds).not.toContain('plugin_disabled_plugin');
+        expect(resultIds).not.toContain('plugin_no_nav_plugin');
+      });
+
+      it('appends plugin items after default items', () => {
+        const result = getOrderedNavItems(null, true, {}, mockPlugins);
+        const resultIds = result.map((item) => item.id);
+
+        // Plugin should be at the end
+        const pluginIndex = resultIds.indexOf('plugin_test_plugin');
+        const settingsIndex = resultIds.indexOf('settings');
+        expect(pluginIndex).toBeGreaterThan(settingsIndex);
+      });
+
+      it('respects saved order for plugin items', () => {
+        const savedOrder = ['channels', 'plugin_test_plugin', 'settings', ...DEFAULT_ADMIN_ORDER.filter(id => id !== 'channels' && id !== 'settings')];
+        const result = getOrderedNavItems(savedOrder, true, {}, mockPlugins);
+        const resultIds = result.map((item) => item.id);
+
+        expect(resultIds[0]).toBe('channels');
+        expect(resultIds[1]).toBe('plugin_test_plugin');
+        expect(resultIds[2]).toBe('settings');
+      });
+
+      it('creates correct nav item structure for plugins', () => {
+        const result = getOrderedNavItems(null, true, {}, mockPlugins);
+        const pluginItem = result.find((item) => item.id === 'plugin_test_plugin');
+
+        expect(pluginItem).toBeDefined();
+        expect(pluginItem.label).toBe('Test Plugin');
+        expect(pluginItem.path).toBe('/plugin/test_plugin');
+        expect(pluginItem.icon).toBeDefined();
+      });
+
+      it('plugin items are available to non-admin users', () => {
+        const result = getOrderedNavItems(null, false, {}, mockPlugins);
+        const resultIds = result.map((item) => item.id);
+
+        expect(resultIds).toContain('plugin_test_plugin');
+      });
+    });
+  });
+
+  describe('getIconForName', () => {
+    it('returns correct icon for known names', () => {
+      expect(getIconForName('smile')).toBeDefined();
+      expect(getIconForName('calendar')).toBeDefined();
+      expect(getIconForName('star')).toBeDefined();
+    });
+
+    it('returns default icon for unknown names', () => {
+      const defaultIcon = getIconForName('unknown_icon_name');
+      const plugZapIcon = getIconForName('plug');
+      expect(defaultIcon).toBe(plugZapIcon);
+    });
+
+    it('returns default icon for empty/null input', () => {
+      const defaultIcon = getIconForName('plug');
+      expect(getIconForName('')).toBe(defaultIcon);
+      expect(getIconForName(null)).toBe(defaultIcon);
+      expect(getIconForName(undefined)).toBe(defaultIcon);
+    });
+
+    it('is case insensitive', () => {
+      expect(getIconForName('SMILE')).toBe(getIconForName('smile'));
+      expect(getIconForName('Smile')).toBe(getIconForName('smile'));
+    });
+
+    it('trims whitespace', () => {
+      expect(getIconForName('  smile  ')).toBe(getIconForName('smile'));
     });
   });
 });

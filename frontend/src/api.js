@@ -1712,7 +1712,7 @@ export default class API {
   // Plugins API
   static async getPlugins() {
     try {
-      const response = await request(`${host}/api/plugins/plugins/`);
+      const response = await request(`${host}/api/plugins/`);
       return response.plugins || [];
     } catch (e) {
       errorNotification('Failed to retrieve plugins', e);
@@ -1721,7 +1721,7 @@ export default class API {
 
   static async reloadPlugins() {
     try {
-      const response = await request(`${host}/api/plugins/plugins/reload/`, {
+      const response = await request(`${host}/api/plugins/reload/`, {
         method: 'POST',
       });
       return response;
@@ -1734,7 +1734,7 @@ export default class API {
     try {
       const form = new FormData();
       form.append('file', file);
-      const response = await request(`${host}/api/plugins/plugins/import/`, {
+      const response = await request(`${host}/api/plugins/import/`, {
         method: 'POST',
         body: form,
       });
@@ -1749,7 +1749,7 @@ export default class API {
 
   static async deletePlugin(key) {
     try {
-      const response = await request(`${host}/api/plugins/plugins/${key}/delete/`, {
+      const response = await request(`${host}/api/plugins/${key}/delete/`, {
         method: 'DELETE',
       });
       return response;
@@ -1761,7 +1761,7 @@ export default class API {
   static async updatePluginSettings(key, settings) {
     try {
       const response = await request(
-        `${host}/api/plugins/plugins/${key}/settings/`,
+        `${host}/api/plugins/${key}/settings/`,
         {
           method: 'POST',
           body: { settings },
@@ -1775,7 +1775,7 @@ export default class API {
 
   static async runPluginAction(key, action, params = {}) {
     try {
-      const response = await request(`${host}/api/plugins/plugins/${key}/run/`, {
+      const response = await request(`${host}/api/plugins/${key}/run/`, {
         method: 'POST',
         body: { action, params },
       });
@@ -1787,7 +1787,7 @@ export default class API {
 
   static async setPluginEnabled(key, enabled) {
     try {
-      const response = await request(`${host}/api/plugins/plugins/${key}/enabled/`, {
+      const response = await request(`${host}/api/plugins/${key}/enabled/`, {
         method: 'POST',
         body: { enabled },
       });
