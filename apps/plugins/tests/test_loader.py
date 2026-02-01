@@ -329,3 +329,57 @@ class TestLoaderWithManifest(TestCase):
         self.assertIsNotNone(plugin)
         self.assertIn("manifest_key", plugin)
         self.assertEqual(plugin["manifest_key"], "test-plugin")
+
+    def test_load_plugin_with_navigation_and_view_content(self):
+        """Test loading plugin with navigation and view_content."""
+        self._copy_fixture("nav_plugin")
+
+        from apps.plugins.loader import PluginManager
+
+        PluginManager._instance = None
+        pm = PluginManager.get()
+        pm.plugins_dir = self.temp_dir
+
+        pm.discover_plugins(sync_db=False)
+
+        plugin = pm.get_plugin("nav_plugin")
+        self.assertIsNotNone(plugin)
+        self.assertEqual(plugin.navigation, {"label": "Test Nav", "icon": "star"})
+        self.assertEqual(plugin.view_content, "<h1>Test View Content</h1>")
+
+    def test_load_plugin_without_navigation_defaults_to_empty(self):
+        """Test that plugins without navigation default to empty dict."""
+        self._copy_fixture("legacy_plugin")
+
+        from apps.plugins.loader import PluginManager
+
+        PluginManager._instance = None
+        pm = PluginManager.get()
+        pm.plugins_dir = self.temp_dir
+
+        pm.discover_plugins(sync_db=False)
+
+        plugin = pm.get_plugin("legacy_plugin")
+        self.assertIsNotNone(plugin)
+        self.assertEqual(plugin.navigation, {})
+        self.assertEqual(plugin.view_content, "")
+
+    def test_list_plugins_includes_navigation_and_view_content(self):
+        """Test that list_plugins includes navigation and view_content fields."""
+        self._copy_fixture("nav_plugin")
+
+        from apps.plugins.loader import PluginManager
+
+        PluginManager._instance = None
+        pm = PluginManager.get()
+        pm.plugins_dir = self.temp_dir
+
+        pm.discover_plugins(sync_db=False)
+        plugins = pm.list_plugins()
+
+        plugin = next((p for p in plugins if p["key"] == "nav_plugin"), None)
+        self.assertIsNotNone(plugin)
+        self.assertIn("navigation", plugin)
+        self.assertIn("view_content", plugin)
+        self.assertEqual(plugin["navigation"], {"label": "Test Nav", "icon": "star"})
+        self.assertEqual(plugin["view_content"], "<h1>Test View Content</h1>")

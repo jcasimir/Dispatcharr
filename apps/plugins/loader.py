@@ -33,6 +33,9 @@ class LoadedPlugin:
     icon: str = ""
     has_manifest: bool = False
     manifest_key: str = ""  # Key declared in manifest (for uniqueness checking)
+    # View-related fields
+    navigation: Dict[str, Any] = field(default_factory=dict)
+    view_content: str = ""
 
 
 class PluginManager:
@@ -223,6 +226,8 @@ class PluginManager:
 
         fields = getattr(instance, "fields", [])
         actions = getattr(instance, "actions", [])
+        navigation = getattr(instance, "navigation", {})
+        view_content = getattr(instance, "view_content", "")
 
         # Get manifest key if available
         manifest_key = manifest_meta.get("key", "") if manifest_meta else ""
@@ -243,6 +248,8 @@ class PluginManager:
             icon=icon,
             has_manifest=has_manifest,
             manifest_key=manifest_key,
+            navigation=navigation,
+            view_content=view_content,
         )
 
     def _sync_db_with_registry(self):
@@ -305,6 +312,9 @@ class PluginManager:
                     "icon": lp.icon,
                     "has_manifest": lp.has_manifest,
                     "manifest_key": lp.manifest_key,
+                    # View-related fields
+                    "navigation": lp.navigation,
+                    "view_content": lp.view_content,
                 }
             )
 
@@ -333,6 +343,9 @@ class PluginManager:
                     "icon": "",
                     "has_manifest": False,
                     "manifest_key": "",
+                    # View-related fields (empty for missing plugins)
+                    "navigation": {},
+                    "view_content": "",
                 }
             )
 

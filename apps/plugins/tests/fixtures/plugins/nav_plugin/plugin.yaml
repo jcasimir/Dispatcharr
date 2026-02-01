@@ -1,0 +1,8 @@
+plugin:
+  key: nav-test-plugin
+  name: Nav Test Plugin
+  version: 1.0.0
+  description: A plugin with navigation and view content
+  authors:
+    - Test Author
+  icon: smile
